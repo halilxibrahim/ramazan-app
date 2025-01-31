@@ -3,6 +3,8 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+import PrayerTimesList from '../components/PrayerTimesList';
+import PrayerCard from '../components/PrayerCard';
 
 // (Önemli) Android’de bildirim kanalı tanımlama (sadece 1 kez yapılır)
 Notifications.setNotificationChannelAsync('ezan-channel', {
@@ -18,41 +20,15 @@ export default function HomeScreen() {
     day: 'numeric',
   });
 
-  const nextPrayer = {
-    name: 'Öğle',
-    time: '13:12',
-    remainingTime: '2 saat 30 dakika',
-  };
-
-  const prayerTimes = [
-    { name: 'İmsak', time: '05:30' },
-    { name: 'Güneş', time: '07:02' },
-    { name: 'Öğle', time: '13:12' },
-    { name: 'İkindi', time: '16:32' },
-    { name: 'Akşam', time: '19:21' },
-    { name: 'Yatsı', time: '20:51' },
-  ];
-
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.date}>{currentDate}</Text>
-        <View style={styles.nextPrayerCard}>
-          <Text style={styles.nextPrayerTitle}>Sonraki Namaz</Text>
-          <Text style={styles.nextPrayerName}>{nextPrayer.name}</Text>
-          <Text style={styles.nextPrayerTime}>{nextPrayer.time}</Text>
-          <Text style={styles.remainingTime}>Kalan Süre: {nextPrayer.remainingTime}</Text>
+        <View>
+          <PrayerCard />
         </View>
       </View>
-
-      <View style={styles.prayerTimesContainer}>
-        {prayerTimes.map((prayer, index) => (
-          <View key={index} style={styles.prayerTimeItem}>
-            <Text style={styles.prayerName}>{prayer.name}</Text>
-            <Text style={styles.prayerTime}>{prayer.time}</Text>
-          </View>
-        ))}
-      </View>
+      <PrayerTimesList/>
 
       <View style={styles.quickActions}>
         <TouchableOpacity style={styles.actionButton}>
