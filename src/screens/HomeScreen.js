@@ -6,7 +6,6 @@ import * as Notifications from 'expo-notifications';
 import PrayerTimesList from '../components/PrayerTimesList';
 import PrayerCard from '../components/PrayerCard';
 
-// (Önemli) Android’de bildirim kanalı tanımlama (sadece 1 kez yapılır)
 Notifications.setNotificationChannelAsync('ezan-channel', {
   name: 'Ezan Kanalı',
   importance: Notifications.AndroidImportance.HIGH,
@@ -23,10 +22,7 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.date}>{currentDate}</Text>
-        <View>
           <PrayerCard />
-        </View>
       </View>
       <PrayerTimesList/>
 
@@ -50,8 +46,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: 10,
   },
   date: {
     fontSize: 16,
