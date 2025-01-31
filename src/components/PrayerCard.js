@@ -43,8 +43,10 @@ export default function PrayerCard() {
 
 const styles = StyleSheet.create({
   nextPrayerCard: {
-    backgroundColor: '#1a237e',
+    backgroundColor: '#328037',
     padding: 20,
+    marginLeft: 10,
+    marginRight: 10,
     borderRadius: 15,
     alignItems: 'center',
     elevation: 5,
