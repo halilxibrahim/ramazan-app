@@ -4,7 +4,6 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import PrayerTimesList from '../components/PrayerTimesList';
-import PrayerCard from '../components/PrayerCard';
 
 Notifications.setNotificationChannelAsync('ezan-channel', {
   name: 'Ezan Kanalı',
@@ -22,14 +21,13 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-          <PrayerCard />
       </View>
       <PrayerTimesList/>
 
       <View style={styles.quickActions}>
         <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="compass" size={24} color="#2e7d32" />
-          <Text style={styles.actionText}>Kıble Pusulası</Text>
+          <Ionicons name="calendar" size={24} color="#2e7d32" />
+          <Text style={styles.actionText}>Hicri Takvim</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <Ionicons name="book" size={24} color="#2e7d32" />

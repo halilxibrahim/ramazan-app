@@ -7,6 +7,7 @@ import PrayerTimesScreen from '../screens/PrayerTimesScreen';
 import QiblaCompassScreen from '../screens/QiblaCompassScreen';
 import QuranReadingScreen from '../screens/QuranReadingScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import HijriConverterScreen from '../screens/HijriConverterScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -21,8 +22,8 @@ export default function RootNavigator() {
             case 'Ana Sayfa':
               iconName = focused ? 'home' : 'home-outline';
               break;
-            case 'Namaz Vakitleri':
-              iconName = focused ? 'time' : 'time-outline';
+            case 'Hicri Takvim':
+              iconName = focused ? 'calendar' : 'calendar-outline';
               break;
             case 'Kıble':
               iconName = focused ? 'compass' : 'compass-outline';
@@ -42,7 +43,7 @@ export default function RootNavigator() {
       })}
     >
       <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
-      <Tab.Screen name="Namaz Vakitleri" component={PrayerTimesScreen} />
+      <Tab.Screen name="Hicri Takvim" component={HijriConverterScreen} />
       <Tab.Screen name="Kıble" component={QiblaCompassScreen} />
       <Tab.Screen name="Kuran" component={QuranReadingScreen} />
       <Tab.Screen name="Ayarlar" component={SettingsScreen} />
