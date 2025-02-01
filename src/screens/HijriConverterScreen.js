@@ -13,10 +13,19 @@ import {
 } from 'react-native';
 
 export default function HijriConverterScreen() {
-  // Kullanıcıdan alınan miladi değerler
+  // Miladi için state'ler
   const [day, setDay] = useState('');
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
+  
+  // Hicri için state'ler
+  const [hijriDay, setHijriDay] = useState('');
+  const [hijriMonth, setHijriMonth] = useState('');
+  const [hijriYear, setHijriYear] = useState('');
+  
+  // UI state'leri
+  const [activeTab, setActiveTab] = useState('miladi'); // 'miladi' veya 'hijri'
+  const [convertedDate, setConvertedDate] = useState(null);
 
   // Dönüşüm sonucu Hicri tarih (ör: "18-06-1444")
   const [hijriDate, setHijriDate] = useState(null);
@@ -24,6 +33,10 @@ export default function HijriConverterScreen() {
   // Hicri takvim (seçilen ay/yıl’ın gün/gün listesi)
   const [hijriCalendarData, setHijriCalendarData] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
+
+  // Add new state for Gregorian calendar
+  const [gregorianCalendarData, setGregorianCalendarData] = useState([]);
+  const [gregorianDate, setGregorianDate] = useState(null);
 
   const handleConvertToHijri = async () => {
     if (!day || !month || !year) {
@@ -39,9 +52,39 @@ export default function HijriConverterScreen() {
       const json = await response.json();
 
       if (json.code === 200) {
-        // "json.data.hijri.date" -> "18-06-1444" gibi döner
         const hijri = json.data.hijri.date;
-        setHijriDate(hijri);
+        const gregorian = `${day}-${month}-${year}`;
+        setConvertedDate(hijri);
+        setHijriDate(hijri); // Takvim için
+        setGregorianDate(gregorian);
+      } else {
+        Alert.alert('Hata', 'Dönüştürme işlemi başarısız oldu!');
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Hata', 'API isteği sırasında bir sorun oluştu.');
+    }
+  };
+
+  const handleConvertToGregorian = async () => {
+    if (!hijriDay || !hijriMonth || !hijriYear) {
+      Alert.alert('Uyarı', 'Lütfen geçerli bir hicri tarih giriniz.');
+      return;
+    }
+
+    const dateParam = `${hijriDay}-${hijriMonth}-${hijriYear}`;
+    const url = `https://api.aladhan.com/v1/hToG?date=${dateParam}`;
+
+    try {
+      const response = await fetch(url);
+      const json = await response.json();
+
+      if (json.code === 200) {
+        const gregorian = json.data.gregorian.date;
+        const hijriDateStr = `${hijriDay}-${hijriMonth}-${hijriYear}`;
+        setConvertedDate(gregorian);
+        setGregorianDate(gregorian);
+        setHijriDate(hijriDateStr);
       } else {
         Alert.alert('Hata', 'Dönüştürme işlemi başarısız oldu!');
       }
@@ -54,10 +97,12 @@ export default function HijriConverterScreen() {
   // hijriDate değiştiğinde (örneğin "18-06-1444"),
   // bu değerden "ay" ve "yıl"ı çekip, ilgili tüm ayın takvimini API'den alalım
   useEffect(() => {
-    if (hijriDate) {
+    if (activeTab === 'miladi' && hijriDate) {
       fetchHijriCalendar();
+    } else if (activeTab === 'hijri' && gregorianDate) {
+      fetchGregorianCalendar();
     }
-  }, [hijriDate]);
+  }, [hijriDate, gregorianDate, activeTab]);
 
   const fetchHijriCalendar = async () => {
     try {
@@ -89,83 +134,183 @@ export default function HijriConverterScreen() {
     }
   };
 
+  // Add new function for fetching Gregorian calendar
+  const fetchGregorianCalendar = async () => {
+    try {
+      setCalendarLoading(true);
+      const [gDay, gMonth, gYear] = gregorianDate.split('-');
+      
+      // Using the calendar by city endpoint for Gregorian calendar
+      const url = `https://api.aladhan.com/v1/calendarByCity/${gYear}/${gMonth}?city=Istanbul&country=Turkey&method=2`;
+      
+      const response = await fetch(url);
+      const json = await response.json();
+
+      if (json.code === 200 && Array.isArray(json.data)) {
+        setGregorianCalendarData(json.data);
+      } else {
+        console.log('API Response:', json);
+        Alert.alert('Hata', 'Miladi takvim alınamadı!');
+      }
+    } catch (error) {
+      console.log('Miladi takvim hatası:', error);
+      Alert.alert('Hata', 'Miladi takvim alınamadı!');
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
   // Takvimi liste şeklinde göstermek için bir öğe oluşturuyoruz
   const renderCalendarItem = ({ item }) => {
-    const hijri = item.date.hijri; 
-    const hijriDay = hijri.day;
-    const hijriMonthEn = hijri.month.en; 
-    const hijriYear = hijri.year;
-    
-    return (
-      <View style={styles.calendarItem}>
-        <Text style={styles.calendarDayText}>{hijriDay}</Text>
-        <View style={styles.calendarDetailContainer}>
-          <Text style={styles.calendarMonthText}>{hijriMonthEn}</Text>
-          <Text style={styles.calendarYearText}>{hijriYear}</Text>
+    if (activeTab === 'miladi') {
+      const hijri = item.date.hijri;
+      return (
+        <View style={styles.calendarItem}>
+          <Text style={styles.calendarDayText}>{hijri.day}</Text>
+          <View style={styles.calendarDetailContainer}>
+            <Text style={styles.calendarMonthText}>{hijri.month.en}</Text>
+            <Text style={styles.calendarYearText}>{hijri.year}</Text>
+          </View>
         </View>
-      </View>
-    );
+      );
+    } else {
+      const gregorian = item.date.gregorian;
+      return (
+        <View style={styles.calendarItem}>
+          <Text style={styles.calendarDayText}>{gregorian.day}</Text>
+          <View style={styles.calendarDetailContainer}>
+            <Text style={styles.calendarMonthText}>{gregorian.month.en}</Text>
+            <Text style={styles.calendarYearText}>{gregorian.year}</Text>
+          </View>
+        </View>
+      );
+    }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Miladi → Hicri Tarih Dönüştürücü</Text>
-        
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Gün"
-            keyboardType="numeric"
-            maxLength={2}
-            value={day}
-            onChangeText={setDay}
-            placeholderTextColor="#666"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Ay"
-            keyboardType="numeric"
-            maxLength={2}
-            value={month}
-            onChangeText={setMonth}
-            placeholderTextColor="#666"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Yıl"
-            keyboardType="numeric"
-            maxLength={4}
-            value={year}
-            onChangeText={setYear}
-            placeholderTextColor="#666"
-          />
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'miladi' && styles.activeTab]}
+            onPress={() => setActiveTab('miladi')}
+          >
+            <Text style={[styles.tabText, activeTab === 'miladi' && styles.activeTabText]}>
+              Miladi → Hicri
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'hijri' && styles.activeTab]}
+            onPress={() => setActiveTab('hijri')}
+          >
+            <Text style={[styles.tabText, activeTab === 'hijri' && styles.activeTabText]}>
+              Hicri → Miladi
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity 
-          style={styles.convertButton} 
-          onPress={handleConvertToHijri}
-        >
-          <Text style={styles.convertButtonText}>Hicri Tarihe Dönüştür</Text>
-        </TouchableOpacity>
+        {activeTab === 'miladi' ? (
+          <>
+            <Text style={styles.title}>Miladi Tarih Girişi</Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                placeholder="Gün"
+                keyboardType="numeric"
+                maxLength={2}
+                value={day}
+                onChangeText={setDay}
+                placeholderTextColor="#666"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Ay"
+                keyboardType="numeric"
+                maxLength={2}
+                value={month}
+                onChangeText={setMonth}
+                placeholderTextColor="#666"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Yıl"
+                keyboardType="numeric"
+                maxLength={4}
+                value={year}
+                onChangeText={setYear}
+                placeholderTextColor="#666"
+              />
+            </View>
+            <TouchableOpacity 
+              style={styles.convertButton} 
+              onPress={handleConvertToHijri}
+            >
+              <Text style={styles.convertButtonText}>Hicri Tarihe Dönüştür</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.title}>Hicri Tarih Girişi</Text>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                placeholder="Gün"
+                keyboardType="numeric"
+                maxLength={2}
+                value={hijriDay}
+                onChangeText={setHijriDay}
+                placeholderTextColor="#666"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Ay"
+                keyboardType="numeric"
+                maxLength={2}
+                value={hijriMonth}
+                onChangeText={setHijriMonth}
+                placeholderTextColor="#666"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Yıl"
+                keyboardType="numeric"
+                maxLength={4}
+                value={hijriYear}
+                onChangeText={setHijriYear}
+                placeholderTextColor="#666"
+              />
+            </View>
+            <TouchableOpacity 
+              style={styles.convertButton} 
+              onPress={handleConvertToGregorian}
+            >
+              <Text style={styles.convertButtonText}>Miladi Tarihe Dönüştür</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
-        {hijriDate && (
+        {convertedDate && (
           <View style={styles.resultContainer}>
-            <Text style={styles.resultText}>Hicri Tarih:</Text>
-            <Text style={styles.resultDate}>{hijriDate}</Text>
+            <Text style={styles.resultText}>
+              {activeTab === 'miladi' ? 'Hicri Tarih:' : 'Miladi Tarih:'}
+            </Text>
+            <Text style={styles.resultDate}>{convertedDate}</Text>
           </View>
         )}
       </View>
 
-      {hijriDate && (
+      {/* Takvim bölümü sadece Miladi→Hicri dönüşümünde gösterilecek */}
+      {convertedDate && (
         <View style={styles.calendarContainer}>
-          <Text style={styles.calendarTitle}>Hicri Takvim</Text>
+          <Text style={styles.calendarTitle}>
+            {activeTab === 'miladi' ? 'Hicri Takvim' : 'Miladi Takvim'}
+          </Text>
           
           {calendarLoading ? (
             <ActivityIndicator size="large" color="#2e7d32" />
           ) : (
             <FlatList
-              data={hijriCalendarData}
+              data={activeTab === 'miladi' ? hijriCalendarData : gregorianCalendarData}
               keyExtractor={(item, index) => index.toString()}
               renderItem={renderCalendarItem}
               showsVerticalScrollIndicator={false}
@@ -292,5 +437,28 @@ const styles = StyleSheet.create({
   calendarYearText: {
     fontSize: 14,
     color: '#666',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  activeTab: {
+    backgroundColor: '#2e7d32',
+  },
+  tabText: {
+    color: '#666',
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: '#fff',
   },
 });
