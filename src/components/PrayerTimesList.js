@@ -1,15 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import * as Location from 'expo-location';
+import PrayerCard from './PrayerCard'; // new import
 
 export default function PrayerTimesList() {
   const [prayerTimes, setPrayerTimes] = useState(null);
+  const [nextPrayer, setNextPrayer] = useState(null); // new state
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Uygulama açılır açılmaz çalışır.
     getLocationAndFetchTimes();
   }, []);
+
+  // Helper to calculate remaining time
+  const calculateTimeDifference = (prayerDate, now) => {
+    const diff = prayerDate - now;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours ? hours + ' saat ' : ''}${remainingMinutes} dakika`;
+  };
+
+  // Helper to compute next prayer based on today's timings order
+  const getNextPrayer = (times) => {
+    if (!times) return null;
+    const now = new Date();
+    const order = ['Imsak', 'Gunes', 'Ogle', 'Ikindi', 'Aksam', 'Yatsi'];
+    for (let key of order) {
+      const [h, m] = times[key].split(':');
+      const prayerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+      if (prayerDate > now) {
+        return { name: key, time: times[key], remainingTime: calculateTimeDifference(prayerDate, now) };
+      }
+    }
+    // If no prayer left today, return the first prayer of next day.
+    const [h, m] = times[order[0]].split(':');
+    const prayerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, h, m);
+    return { name: order[0], time: times[order[0]], remainingTime: calculateTimeDifference(prayerDate, now) };
+  };
 
   // 1) Konum iste ve sonra API'den namaz saatlerini çek
   const getLocationAndFetchTimes = async () => {
@@ -58,6 +87,8 @@ export default function PrayerTimesList() {
           Yatsi: Isha,
         };
         setPrayerTimes(mappedTimes);
+        const upcoming = getNextPrayer(mappedTimes);
+        setNextPrayer(upcoming);
       } else {
         Alert.alert('Hata', 'Namaz vakitleri alınamadı!');
       }
@@ -81,13 +112,18 @@ export default function PrayerTimesList() {
 
   // 4) Vakitleri listele
   return (
-    <View style={styles.prayerTimesContainer}>
-      {prayerTimes && Object.entries(prayerTimes).map(([name, time], index) => (
-        <View key={index} style={styles.prayerTimeItem}>
-          <Text style={styles.prayerName}>{name}</Text>
-          <Text style={styles.prayerTime}>{time}</Text>
-        </View>
-      ))}
+    <View>
+      {/* Next prayer card */}
+      {nextPrayer && <PrayerCard nextPrayer={nextPrayer} />}
+      {/* List of all prayer times */}
+      <View style={styles.prayerTimesContainer}>
+        {prayerTimes && Object.entries(prayerTimes).map(([name, time], index) => (
+          <View key={index} style={styles.prayerTimeItem}>
+            <Text style={styles.prayerName}>{name}</Text>
+            <Text style={styles.prayerTime}>{time}</Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }

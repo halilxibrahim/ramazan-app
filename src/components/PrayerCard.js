@@ -2,32 +2,27 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export default function PrayerCard() {
-  const nextPrayer = {
-    name: 'Öğle',
-    time: '13:12',
-    remainingTime: '2 saat 30 dakika',
-  };
-
+export default function PrayerCard({ nextPrayer }) {
   const getPrayerIcon = (prayerName) => {
     switch (prayerName) {
-      case 'İmsak':
+      case 'Imsak': // formerly İmsak
         return { name: 'weather-night', color: '#c7c7c7' };
-      case 'Güneş':
+      case 'Gunes': // formerly Güneş
         return { name: 'weather-sunset-up', color: '#ff9800' };
-      case 'Öğle':
+      case 'Ogle': // formerly Öğle
         return { name: 'white-balance-sunny', color: '#ffd700' };
-      case 'İkindi':
+      case 'Ikindi': // formerly İkindi
         return { name: 'weather-partly-cloudy', color: '#fb8c00' };
-      case 'Akşam':
+      case 'Aksam': // formerly Akşam
         return { name: 'weather-sunset-down', color: '#f57c00' };
-      case 'Yatsı':
+      case 'Yatsi': // formerly Yatsı
         return { name: 'weather-night', color: '#455a64' };
       default:
         return { name: 'clock-outline', color: '#ffffff' };
     }
   };
 
+  if (!nextPrayer) return null;
   const icon = getPrayerIcon(nextPrayer.name);
 
   return (
@@ -45,9 +40,9 @@ const styles = StyleSheet.create({
   nextPrayerCard: {
     backgroundColor: '#328037',
     padding: 20,
-    marginLeft: 10,
-    marginRight: 10,
-    borderRadius: 15,
+    marginLeft: 15,
+    marginRight: 15,
+    borderRadius: 20,
     alignItems: 'center',
     elevation: 5,
     shadowColor: '#000',
