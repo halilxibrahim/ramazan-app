@@ -1,51 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet, TextInput } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { setQuranProgress } from '../store/slice/userSlice';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 
-export default function QuranReadingScreen() {
-  const dispatch = useDispatch();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [verses, setVerses] = useState([]);
+// Türkçe sure isimleri mapping'i: İngilizce isim üzerinden Türkçe karşılıkları belirleniyor.
+const turkishSurahNames = {
+  "Al-Fatihah": "Fatiha",
+  "الفاتحة": "Fatiha",
+  "Al-Baqarah": "Bakara",
+  "البقرة": "Bakara",
+  "Ali 'Imran": "Al-i İmran",
+  "آل عمران": "Al-i İmran",
+  "An-Nisa": "Nisa",
+  "النساء": "Nisa",
+  "Al-Ma'idah": "Maide",
+  "المائدة": "Maide",
+  "Al-An'am": "En'am",
+  "الأنعام": "En'am",
+  // Diğer sure isimleri eklenebilir...
+};
+
+export default function QuranSurahListScreen() {
+  const [surahs, setSurahs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [totalPages] = useState(604); // Kuran'ın toplam sayfa sayısı
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredSurahs, setFilteredSurahs] = useState([]);
+  const [searchMode, setSearchMode] = useState(false);
+  const navigation = useNavigation();
 
+  // Gelen İngilizce isim üzerinden Türkçe karşılığını döndürür.
+  const getTurkishSurahName = (englishName) => {
+    return turkishSurahNames[englishName] || englishName;
+  };
+
+  // Sayfa yüklendiğinde sure listesini çekiyoruz.
   useEffect(() => {
-    fetchPageVerses(currentPage);
-  }, [currentPage]);
+    fetchSurahs();
+  }, []);
 
-  const fetchPageVerses = async (page) => {
+  // Arama sorgusuna göre sure listesini filtreliyoruz.
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const searchTerm = searchQuery.toLowerCase().trim();
+      const filtered = surahs.filter(surah => {
+        // API'den gelen sura nesnesi; örneğin: { number, englishName, name, ... }
+        const englishName = surah.englishName.toLowerCase();
+        const arabicName = surah.name.toLowerCase(); // Arapça sure adı
+        const turkishName = getTurkishSurahName(surah.englishName).toLowerCase();
+
+        return englishName.includes(searchTerm) ||
+               arabicName.includes(searchTerm) ||
+               turkishName.includes(searchTerm);
+      });
+      setFilteredSurahs(filtered);
+    } else {
+      setFilteredSurahs([]);
+    }
+  }, [searchQuery, surahs]);
+
+  // Sure listesini API'den çekiyoruz.
+  const fetchSurahs = async () => {
     try {
       setLoading(true);
-      // Her sayfada ortalama 15 ayet olduğunu varsayalım
-      const startVerse = (page - 1) * 15 + 1;
-      const response = await fetch(`https://api.alquran.cloud/v1/page/${page}/quran-uthmani`);
+      const response = await fetch("https://api.alquran.cloud/v1/surah");
       const data = await response.json();
-      setVerses(data.data.ayahs);
+      setSurahs(data.data);
       setError(null);
     } catch (err) {
-      setError('Sayfa yüklenirken bir hata oluştu');
+      setError("Sureler yüklenirken bir hata oluştu");
     } finally {
       setLoading(false);
     }
-  };
-
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const goToPage = (pageNumber) => {
-    const page = Math.min(Math.max(1, parseInt(pageNumber)), totalPages);
-    setCurrentPage(page);
   };
 
   if (loading) {
@@ -66,43 +92,53 @@ export default function QuranReadingScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.pageNavigator}>
-        <TouchableOpacity 
-          style={[styles.navButton, currentPage === 1 && styles.disabledButton]} 
-          onPress={goToPreviousPage}
-          disabled={currentPage === 1}
-        >
-          <Text style={styles.buttonText}>Önceki Sayfa</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.pageInputContainer}>
-          <TextInput
-            style={styles.pageInput}
-            keyboardType="numeric"
-            value={String(currentPage)}
-            onChangeText={(text) => goToPage(text)}
-            maxLength={3}
-          />
-          <Text style={styles.pageText}>/ {totalPages}</Text>
-        </View>
-
-        <TouchableOpacity 
-          style={[styles.navButton, currentPage === totalPages && styles.disabledButton]}
-          onPress={goToNextPage}
-          disabled={currentPage === totalPages}
-        >
-          <Text style={styles.buttonText}>Sonraki Sayfa</Text>
-        </TouchableOpacity>
+      {/* Başlık ve arama kısmı */}
+      <View style={styles.header}>
+        {searchMode ? (
+          <View style={styles.searchContainer}>
+            <Icon name="search" size={24} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Sure ara..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Icon name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Sureler</Text>
+            <TouchableOpacity onPress={() => setSearchMode(!searchMode)}>
+              <Icon name="search" size={24} color="#2e7d32" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
-      <ScrollView style={styles.scrollContainer}>
-        {verses.map((verse, index) => (
-          <View key={verse.number} style={styles.verseContainer}>
-            <Text style={styles.arabicText}>{verse.text}</Text>
-            <Text style={styles.translationText}>
-              {verse.surah.name} - Ayet {verse.numberInSurah}
-            </Text>
-          </View>
+      {/* Sure listesini gösteriyoruz */}
+      <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        {(searchQuery.trim() !== '' ? filteredSurahs : surahs).map(surah => (
+          <TouchableOpacity 
+            key={surah.number} 
+            style={styles.surahContainer}
+            onPress={() => navigation.navigate('SurahDetail', {
+              surahNumber: surah.number,
+              englishName: surah.englishName,
+              turkishName: getTurkishSurahName(surah.englishName)
+            })}
+          >
+            <View style={styles.surahHeader}>
+              <Text style={styles.surahTitle}>
+                {getTurkishSurahName(surah.englishName)} ({surah.englishName})
+              </Text>
+              <Text style={styles.surahNumber}>Sure No: {surah.number}</Text>
+            </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
@@ -118,69 +154,64 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  pageNavigator: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
+  header: {
     backgroundColor: '#fff',
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  navButton: {
-    backgroundColor: '#2e7d32',
-    padding: 10,
-    borderRadius: 8,
-    minWidth: 100,
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  disabledButton: {
-    backgroundColor: '#ccc',
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2e7d32',
   },
-  pageInputContainer: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  pageInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    padding: 8,
-    width: 50,
-    textAlign: 'center',
-    marginRight: 5,
-  },
-  pageText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  verseContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: '#f5f5f5',
     borderRadius: 8,
-    marginBottom: 16,
-    elevation: 2,
+    padding: 8,
   },
-  arabicText: {
-    fontSize: 24,
-    textAlign: 'right',
-    color: '#333',
-    marginBottom: 16,
-    fontFamily: 'System',
+  searchIcon: {
+    marginRight: 8,
   },
-  translationText: {
+  searchInput: {
+    flex: 1,
     fontSize: 16,
-    color: '#666',
-    textAlign: 'left',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 14,
+  surahContainer: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  surahHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  surahTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#2e7d32',
+  },
+  surahNumber: {
+    fontSize: 14,
+    color: '#666',
   },
   errorText: {
+    fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    fontSize: 16,
-  }
+  },
 });

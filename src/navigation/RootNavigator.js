@@ -1,3 +1,4 @@
+// src/navigation/RootNavigator.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -5,9 +6,10 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
 import PrayerTimesScreen from '../screens/PrayerTimesScreen';
 import QiblaCompassScreen from '../screens/QiblaCompassScreen';
-import QuranReadingScreen from '../screens/QuranReadingScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import HijriConverterScreen from '../screens/HijriConverterScreen';
+// Eski QuranReadingScreen yerine oluşturduğumuz stack navigatörü ekleyin
+import QuranStack from '../navigation/QuranStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -45,7 +47,8 @@ export default function RootNavigator() {
       <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
       <Tab.Screen name="Hicri Takvim" component={HijriConverterScreen} />
       <Tab.Screen name="Kıble" component={QiblaCompassScreen} />
-      <Tab.Screen name="Kuran" component={QuranReadingScreen} />
+      {/* "Kuran" sekmesinde artık QuranStack kullanılıyor */}
+      <Tab.Screen name="Kuran" component={QuranStack} />
       <Tab.Screen name="Ayarlar" component={SettingsScreen} />
     </Tab.Navigator>
   );
