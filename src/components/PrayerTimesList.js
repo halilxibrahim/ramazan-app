@@ -71,7 +71,7 @@ export default function PrayerTimesList() {
   // 2) AlAdhan API'ye istek atıp veriyi çekiyoruz
   const fetchPrayerTimes = async (lat, lon) => {
     try {
-      const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=2`;
+      const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=13`;
       const response = await fetch(url);
       const json = await response.json();
 
