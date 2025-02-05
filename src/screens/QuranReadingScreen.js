@@ -60,7 +60,7 @@ const turkishSurahNames = {
   "At-Tur": "Tur",
   "An-Najm": "Necm",
   "Al-Qamar": "Kamer",
-  "Ar-Rahman": "Rahman",
+  "Ar-Rahmaan": "Rahman",
   "Al-Waaqia": "Vakia",
   "Al-Hadid": "Hadid",
   "Al-Mujaadila": "Mücadele",
