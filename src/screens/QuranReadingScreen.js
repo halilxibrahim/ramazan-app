@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet, TextInput, Animated, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 // Türkçe sure isimleri mapping'i: İngilizce isim üzerinden Türkçe karşılıkları belirleniyor.
@@ -129,6 +130,8 @@ export default function QuranSurahListScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredSurahs, setFilteredSurahs] = useState([]);
   const [searchMode, setSearchMode] = useState(false);
+  const [lastReadSurah, setLastReadSurah] = useState(null);
+  const bookmarkAnimation = new Animated.Value(1);
   const navigation = useNavigation();
 
   // Gelen İngilizce isim üzerinden Türkçe karşılığını döndürür.
@@ -136,9 +139,10 @@ export default function QuranSurahListScreen() {
     return turkishSurahNames[englishName] || englishName;
   };
 
-  // Sayfa yüklendiğinde sure listesini çekiyoruz.
+  // Sayfa yüklendiğinde sure listesini ve son okunan sureyi çekiyoruz
   useEffect(() => {
     fetchSurahs();
+    loadLastReadSurah();
   }, []);
 
   // Arama sorgusuna göre sure listesini filtreliyoruz.
@@ -176,78 +180,138 @@ export default function QuranSurahListScreen() {
     }
   };
 
+  // Son okunan sureyi yükleme
+  const loadLastReadSurah = async () => {
+    try {
+      const savedSurah = await AsyncStorage.getItem('lastReadSurah');
+      if (savedSurah) {
+        setLastReadSurah(JSON.parse(savedSurah));
+      }
+    } catch (error) {
+      console.error('Error loading last read surah:', error);
+    }
+  };
+
+  // Son okunan sureyi kaydetme
+  const saveLastReadSurah = async (surah) => {
+    try {
+      await AsyncStorage.setItem('lastReadSurah', JSON.stringify(surah));
+      setLastReadSurah(surah);
+      
+      // Bookmark animasyonu
+      Animated.sequence([
+        Animated.timing(bookmarkAnimation, {
+          toValue: 1.2,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bookmarkAnimation, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } catch (error) {
+      console.error('Error saving last read surah:', error);
+    }
+  };
+
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#2e7d32" />
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color="#2e7d32" />
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* Başlık ve arama kısmı */}
-      <View style={styles.header}>
-        {searchMode ? (
-          <View style={styles.searchContainer}>
-            <Icon name="search" size={24} color="#666" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Sure ara..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoFocus
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Icon name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            )}
-          </View>
-        ) : (
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Sureler</Text>
-            <TouchableOpacity onPress={() => setSearchMode(!searchMode)}>
-              <Icon name="search" size={24} color="#2e7d32" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {/* Sure listesini gösteriyoruz */}
-      <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-        {(searchQuery.trim() !== '' ? filteredSurahs : surahs).map(surah => (
-          <TouchableOpacity 
-            key={surah.number} 
-            style={styles.surahContainer}
-            onPress={() => navigation.navigate('SurahDetail', {
-              surahNumber: surah.number,
-              englishName: surah.englishName,
-              turkishName: getTurkishSurahName(surah.englishName)
-            })}
-          >
-            <View style={styles.surahHeader}>
-              <Text style={styles.surahTitle}>
-                {getTurkishSurahName(surah.englishName)} ({surah.englishName})
-              </Text>
-              <Text style={styles.surahNumber}>Sure No: {surah.number}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Başlık ve arama kısmı */}
+        <View style={styles.header}>
+          {searchMode ? (
+            <View style={styles.searchContainer}>
+              <Icon name="search" size={24} color="#666" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Sure ara..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Icon name="close" size={24} color="#666" />
+                </TouchableOpacity>
+              )}
             </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
+          ) : (
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>Sureler</Text>
+              <TouchableOpacity onPress={() => setSearchMode(!searchMode)}>
+                <Icon name="search" size={24} color="#2e7d32" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Sure listesini gösteriyoruz */}
+        <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+          {(searchQuery.trim() !== '' ? filteredSurahs : surahs).map(surah => (
+            <TouchableOpacity 
+              key={surah.number} 
+              style={[
+                styles.surahContainer,
+                lastReadSurah?.number === surah.number && styles.lastReadSurah
+              ]}
+              onPress={() => {
+                saveLastReadSurah(surah);
+                navigation.navigate('SurahDetail', {
+                  surahNumber: surah.number,
+                  englishName: surah.englishName,
+                  turkishName: getTurkishSurahName(surah.englishName)
+                });
+              }}
+            >
+              <View style={styles.surahHeader}>
+                <View style={styles.surahInfo}>
+                  <Text style={styles.surahTitle}>
+                    {getTurkishSurahName(surah.englishName)} ({surah.englishName})
+                  </Text>
+                  <Text style={styles.surahNumber}>Sure No: {surah.number}</Text>
+                </View>
+                {lastReadSurah?.number === surah.number && (
+                  <Animated.View style={{ transform: [{ scale: bookmarkAnimation }] }}>
+                    <Icon name="bookmark" size={24} color="#2e7d32" />
+                  </Animated.View>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    marginTop: 50,
+    backgroundColor: '#f5f5f5',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
@@ -315,5 +379,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  lastReadSurah: {
+    borderWidth: 2,
+    borderColor: '#2e7d32',
+  },
+  surahInfo: {
+    flex: 1,
   },
 });

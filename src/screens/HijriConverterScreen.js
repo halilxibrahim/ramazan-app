@@ -325,6 +325,7 @@ export default function HijriConverterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop:50,
     padding: 16,
     backgroundColor: '#f0f4f0',
   },

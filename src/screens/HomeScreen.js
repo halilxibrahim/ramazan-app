@@ -1,6 +1,6 @@
 // src/screens/HomeScreen.js
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import PrayerTimesList from '../components/PrayerTimesList';
@@ -19,22 +19,24 @@ export default function HomeScreen() {
   });
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-      </View>
-      <PrayerTimesList/>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.header}>
+        </View>
+        <PrayerTimesList/>
 
-      <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="calendar" size={24} color="#2e7d32" />
-          <Text style={styles.actionText}>Hicri Takvim</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="book" size={24} color="#2e7d32" />
-          <Text style={styles.actionText}>Kuran-ı Kerim</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.quickActions}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="calendar" size={24} color="#2e7d32" />
+            <Text style={styles.actionText}>Hicri Takvim</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="book" size={24} color="#2e7d32" />
+            <Text style={styles.actionText}>Kuran-ı Kerim</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -44,7 +46,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    padding: 10,
+    padding: 20,
   },
   date: {
     fontSize: 16,

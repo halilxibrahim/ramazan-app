@@ -44,12 +44,12 @@ export default function RootNavigator() {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="Ana Sayfa" component={HomeScreen} />
-      <Tab.Screen name="Hicri Takvim" component={HijriConverterScreen} />
-      <Tab.Screen name="Kıble" component={QiblaCompassScreen} />
+      <Tab.Screen name="Ana Sayfa" component={HomeScreen} options={{ headerShown: false }}  />
+      <Tab.Screen name="Hicri Takvim" component={HijriConverterScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Kıble" component={QiblaCompassScreen} options={{ headerShown: false }} />
       {/* "Kuran" sekmesinde artık QuranStack kullanılıyor */}
-      <Tab.Screen name="Kuran" component={QuranStack} />
-      <Tab.Screen name="Ayarlar" component={SettingsScreen} />
+      <Tab.Screen name="Kuran" component={QuranStack} options={{ headerShown: false }}/>
+      <Tab.Screen name="Ayarlar" component={SettingsScreen} options={{ headerShown: false }}/>
     </Tab.Navigator>
   );
 }

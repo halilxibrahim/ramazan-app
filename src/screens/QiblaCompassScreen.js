@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
 import { Magnetometer } from 'expo-sensors';
 import Svg, { Line, Circle, Text as SvgText, G, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 
@@ -67,54 +67,61 @@ export default function QiblaCompassScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Kıble Pusulası</Text>
-        <Text style={styles.subtitle}>
-          Telefonu düz tutarak yavaşça döndürün
-        </Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Kıble Pusulası</Text>
+          <Text style={styles.subtitle}>
+            Telefonu düz tutarak yavaşça döndürün
+          </Text>
+        </View>
+
+        <View style={styles.compassContainer}>
+          <Svg width={compassSize} height={compassSize} style={{ transform: [{ rotate: `${-degree}deg` }] }}>
+            <Defs>
+              <LinearGradient id="compassGradient" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor="#ffffff" stopOpacity="1" />
+                <Stop offset="1" stopColor="#f0f0f0" stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+
+            {/* Ana pusula çemberi */}
+            <Circle cx={center} cy={center} r={center - 10} fill="url(#compassGradient)" 
+              stroke="#ccc" strokeWidth="2" />
+            <Circle cx={center} cy={center} r={center - 40} fill="transparent" 
+              stroke="#eee" strokeWidth="1" />
+
+            {/* Derece işaretleri */}
+            {renderCompassMarkers()}
+
+            {/* Kıble yönü */}
+            <Line
+              x1={center}
+              y1={center}
+              x2={center + (center - 30) * Math.cos((qiblaAngle - 90) * Math.PI / 180)}
+              y2={center + (center - 30) * Math.sin((qiblaAngle - 90) * Math.PI / 180)}
+              stroke="red"
+              strokeWidth="3"
+            />
+            <Circle cx={center} cy={center} r="5" fill="#333" />
+          </Svg>
+        </View>
+
+        <View style={styles.infoCard}>
+          <Text style={styles.infoText}>Pusula Açısı: {Math.round(degree)}°</Text>
+          <Text style={styles.infoText}>Kıble Açısı: {qiblaAngle}°</Text>
+        </View>
       </View>
-
-      <View style={styles.compassContainer}>
-        <Svg width={compassSize} height={compassSize} style={{ transform: [{ rotate: `${-degree}deg` }] }}>
-          <Defs>
-            <LinearGradient id="compassGradient" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor="#ffffff" stopOpacity="1" />
-              <Stop offset="1" stopColor="#f0f0f0" stopOpacity="1" />
-            </LinearGradient>
-          </Defs>
-
-          {/* Ana pusula çemberi */}
-          <Circle cx={center} cy={center} r={center - 10} fill="url(#compassGradient)" 
-            stroke="#ccc" strokeWidth="2" />
-          <Circle cx={center} cy={center} r={center - 40} fill="transparent" 
-            stroke="#eee" strokeWidth="1" />
-
-          {/* Derece işaretleri */}
-          {renderCompassMarkers()}
-
-          {/* Kıble yönü */}
-          <Line
-            x1={center}
-            y1={center}
-            x2={center + (center - 30) * Math.cos((qiblaAngle - 90) * Math.PI / 180)}
-            y2={center + (center - 30) * Math.sin((qiblaAngle - 90) * Math.PI / 180)}
-            stroke="red"
-            strokeWidth="3"
-          />
-          <Circle cx={center} cy={center} r="5" fill="#333" />
-        </Svg>
-      </View>
-
-      <View style={styles.infoCard}>
-        <Text style={styles.infoText}>Pusula Açısı: {Math.round(degree)}°</Text>
-        <Text style={styles.infoText}>Kıble Açısı: {qiblaAngle}°</Text>
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    marginTop: 50,
+    backgroundColor: '#f5f5f5',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
