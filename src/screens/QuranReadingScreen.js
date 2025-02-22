@@ -222,7 +222,8 @@ export default function QuranSurahListScreen() {
   const loadReadSurahs = async () => {
     try {
       const savedReadSurahs = await AsyncStorage.getItem('readSurahs');
-      if (savedReadSurahs) {
+      // Yükleme sırasında null kontrolü eklendi
+      if (savedReadSurahs !== null) {
         const readSurahsArray = JSON.parse(savedReadSurahs);
         setReadSurahs(new Set(readSurahsArray));
         updateCompletionPercentage(new Set(readSurahsArray));
@@ -246,6 +247,7 @@ export default function QuranSurahListScreen() {
         newReadSurahs.add(surahNumber);
       }
       
+      // readSurahs Set'ini array'e çevirirken spread operatörü kullanılıyor
       await AsyncStorage.setItem('readSurahs', JSON.stringify([...newReadSurahs]));
       setReadSurahs(newReadSurahs);
       updateCompletionPercentage(newReadSurahs);
