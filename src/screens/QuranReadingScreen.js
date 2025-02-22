@@ -133,6 +133,8 @@ export default function QuranSurahListScreen() {
   const [lastReadSurah, setLastReadSurah] = useState(null);
   const bookmarkAnimation = new Animated.Value(1);
   const navigation = useNavigation();
+  const [readSurahs, setReadSurahs] = useState(new Set());
+  const [completionPercentage, setCompletionPercentage] = useState(0);
 
   // Gelen İngilizce isim üzerinden Türkçe karşılığını döndürür.
   const getTurkishSurahName = (englishName) => {
@@ -143,6 +145,7 @@ export default function QuranSurahListScreen() {
   useEffect(() => {
     fetchSurahs();
     loadLastReadSurah();
+    loadReadSurahs();
   }, []);
 
   // Arama sorgusuna göre sure listesini filtreliyoruz.
@@ -216,6 +219,41 @@ export default function QuranSurahListScreen() {
     }
   };
 
+  const loadReadSurahs = async () => {
+    try {
+      const savedReadSurahs = await AsyncStorage.getItem('readSurahs');
+      if (savedReadSurahs) {
+        const readSurahsArray = JSON.parse(savedReadSurahs);
+        setReadSurahs(new Set(readSurahsArray));
+        updateCompletionPercentage(new Set(readSurahsArray));
+      }
+    } catch (error) {
+      console.error('Error loading read surahs:', error);
+    }
+  };
+
+  const updateCompletionPercentage = (readSurahsSet) => {
+    const percentage = (readSurahsSet.size / 114) * 100;
+    setCompletionPercentage(Math.round(percentage));
+  };
+
+  const toggleReadStatus = async (surahNumber) => {
+    try {
+      const newReadSurahs = new Set(readSurahs);
+      if (newReadSurahs.has(surahNumber)) {
+        newReadSurahs.delete(surahNumber);
+      } else {
+        newReadSurahs.add(surahNumber);
+      }
+      
+      await AsyncStorage.setItem('readSurahs', JSON.stringify([...newReadSurahs]));
+      setReadSurahs(newReadSurahs);
+      updateCompletionPercentage(newReadSurahs);
+    } catch (error) {
+      console.error('Error updating read surah status:', error);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -267,6 +305,21 @@ export default function QuranSurahListScreen() {
           )}
         </View>
 
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <Text style={styles.progressText}>
+            Okunan Sureler: %{completionPercentage}
+          </Text>
+          <View style={styles.progressBarContainer}>
+            <View 
+              style={[
+                styles.progressBar, 
+                { width: `${completionPercentage}%` }
+              ]} 
+            />
+          </View>
+        </View>
+
         {/* Sure listesini gösteriyoruz */}
         <ScrollView style={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           {(searchQuery.trim() !== '' ? filteredSurahs : surahs).map(surah => (
@@ -274,6 +327,7 @@ export default function QuranSurahListScreen() {
               key={surah.number} 
               style={[
                 styles.surahContainer,
+                readSurahs.has(surah.number) && styles.readSurah,
                 lastReadSurah?.number === surah.number && styles.lastReadSurah
               ]}
               onPress={() => {
@@ -292,6 +346,16 @@ export default function QuranSurahListScreen() {
                   </Text>
                   <Text style={styles.surahNumber}>Sure No: {surah.number}</Text>
                 </View>
+                <TouchableOpacity
+                  onPress={() => toggleReadStatus(surah.number)}
+                  style={styles.checkboxContainer}
+                >
+                  <Icon 
+                    name={readSurahs.has(surah.number) ? "check-circle" : "radio-button-unchecked"} 
+                    size={24} 
+                    color="#2e7d32" 
+                  />
+                </TouchableOpacity>
                 {lastReadSurah?.number === surah.number && (
                   <Animated.View style={{ transform: [{ scale: bookmarkAnimation }] }}>
                     <Icon name="bookmark" size={24} color="#2e7d32" />
@@ -386,5 +450,32 @@ const styles = StyleSheet.create({
   },
   surahInfo: {
     flex: 1,
+  },
+  progressContainer: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  progressText: {
+    fontSize: 16,
+    color: '#2e7d32',
+    marginBottom: 8,
+  },
+  progressBarContainer: {
+    height: 10,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#2e7d32',
+  },
+  readSurah: {
+    backgroundColor: '#e8f5e9',
+  },
+  checkboxContainer: {
+    padding: 4,
   },
 });

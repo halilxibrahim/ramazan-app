@@ -2,18 +2,21 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { createStackNavigator } from '@react-navigation/stack';
 
 import HomeScreen from '../screens/HomeScreen';
 import PrayerTimesScreen from '../screens/PrayerTimesScreen';
 import QiblaCompassScreen from '../screens/QiblaCompassScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import HijriConverterScreen from '../screens/HijriConverterScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 // Eski QuranReadingScreen yerine oluşturduğumuz stack navigatörü ekleyin
 import QuranStack from '../navigation/QuranStack';
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
-export default function RootNavigator() {
+function MainTabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -51,5 +54,22 @@ export default function RootNavigator() {
       <Tab.Screen name="Kuran" component={QuranStack} options={{ headerShown: false }}/>
       <Tab.Screen name="Ayarlar" component={SettingsScreen} options={{ headerShown: false }}/>
     </Tab.Navigator>
+  );
+}
+
+export default function RootNavigator() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="Onboarding" 
+        component={OnboardingScreen} 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="Main" 
+        component={MainTabNavigator} 
+        options={{ headerShown: false }} 
+      />
+    </Stack.Navigator>
   );
 }
