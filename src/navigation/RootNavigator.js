@@ -10,6 +10,7 @@ import QiblaCompassScreen from '../screens/QiblaCompassScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import HijriConverterScreen from '../screens/HijriConverterScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 // Eski QuranReadingScreen yerine oluşturduğumuz stack navigatörü ekleyin
 import QuranStack from '../navigation/QuranStack';
 
@@ -68,6 +69,11 @@ export default function RootNavigator() {
       <Stack.Screen 
         name="Main" 
         component={MainTabNavigator} 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="PrivacyPolicy" 
+        component={PrivacyPolicyScreen} 
         options={{ headerShown: false }} 
       />
     </Stack.Navigator>
